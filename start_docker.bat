@@ -1,0 +1,1 @@
+docker run --gpus all -it --rm -p 8001:8001 -v "%cd%\triton_repo:/models"  my_triton_clip tritonserver --model-repository=/models

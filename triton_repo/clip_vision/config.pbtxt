@@ -1,0 +1,19 @@
+name: "clip_vision"
+backend: "onnxruntime"
+max_batch_size: 0
+
+input [
+  {
+    name: "pixel_values"
+    data_type: TYPE_FP32
+    dims: [ -1, 3, 224, 224 ]
+  }
+]
+
+output [
+  {
+    name: "image_embeds"
+    data_type: TYPE_FP32
+    dims: [ -1, 512 ]
+  }
+]
