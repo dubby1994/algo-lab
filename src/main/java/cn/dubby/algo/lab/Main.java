@@ -1,9 +1,10 @@
 package cn.dubby.algo.lab;
 
+import ai.onnxruntime.OrtException;
 import cn.dubby.algo.lab.dto.RankDTO;
 import cn.dubby.algo.lab.feature.FeaturePreProcessService;
+import cn.dubby.algo.lab.feature.JavaRuntimeOnnxFeatureService;
 import cn.dubby.algo.lab.feature.TritonFeatureService;
-import cn.dubby.algo.lab.util.LogUtils;
 import org.opencv.core.Core;
 
 import java.io.File;
@@ -17,8 +18,9 @@ public class Main {
 
     private static final FeaturePreProcessService featurePreProcessService = new FeaturePreProcessService();
     private static final TritonFeatureService tritonFeatureService = new TritonFeatureService("localhost", 8001);
+    private static final JavaRuntimeOnnxFeatureService javaRuntimeOnnxFeatureService = new JavaRuntimeOnnxFeatureService();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws OrtException {
         Map<String, float[]> map = new HashMap<>();
 
         File folder = new File("data/");
@@ -62,9 +64,18 @@ public class Main {
         }
     }
 
-    private static float[] imageToFeature(String imagePath) {
+    private static float[] imageToFeature(String imagePath) throws OrtException {
         float[] preprocessedFeature = featurePreProcessService.preprocess(imagePath, false);
-        return tritonFeatureService.getVector("clip_vision", "pixel_values", preprocessedFeature);
+
+        int batchSize = 100;
+        float[][] batchPreprocessedFeature = new float[batchSize][preprocessedFeature.length];
+        for (int i = 0; i < batchSize; i++) {
+            batchPreprocessedFeature[i] = preprocessedFeature;
+        }
+
+        //return tritonFeatureService.getVector("clip_vision", "pixel_values", preprocessedFeature);
+        float[][] batchResult = javaRuntimeOnnxFeatureService.getVector(batchPreprocessedFeature);
+        return batchResult[0];
     }
 
     public static float[] normalize(float[] v) {
